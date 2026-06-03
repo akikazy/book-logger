@@ -155,7 +155,7 @@
         </div>
         <div class="book-detail-row">
           <div class="book-detail-cell">
-            <div class="book-detail-label">発行日</div>
+            <div class="book-detail-label">発行年</div>
             <div class="book-detail-val" id="book-date">—</div>
           </div>
           <div class="book-detail-cell">
@@ -319,16 +319,8 @@ function showConfirm(info, isManual) {
   document.getElementById('book-title').value = info.title;
   document.getElementById('book-author').value = info.authors;
   document.getElementById('book-publisher').value = info.publisher;
-  const pd = info.publishedDate || '';
-  let fmtDate = '—';
-  if (pd) {
-    const parts = pd.replace(/-/g,'/').split('/');
-    const y = parts[0] || '';
-    const m = (parts[1] || '').padStart(2,'0');
-    const d = (parts[2] || '').padStart(2,'0');
-    fmtDate = m ? (d && d!='00' ? `${y}/${m}/${d}` : `${y}/${m}`) : y;
-  }
-  document.getElementById('book-date').textContent = fmtDate;
+  document.getElementById('book-date').textContent = info.publishedDate ? info.publishedDate.slice(0,4) : '—';
+
   const today = new Date();
   document.getElementById('record-date-label').textContent =
     `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
