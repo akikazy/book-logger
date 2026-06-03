@@ -538,24 +538,45 @@ async function lookupISBN(isbn) {
   showLoading('書籍情報を取得中…');
   currentISBN = isbn;
   try {
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+    // openBD（日本語書籍に強いデータベース）で検索
+    const res = await fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`);
     const data = await res.json();
+
+    if (data[0]) {
+      const s = data[0].summary;
+      bookData = {
+        isbn,
+        title:         s.title       || '（タイトル不明）',
+        authors:       s.author      || '—',
+        publisher:     s.publisher   || '—',
+        publishedDate: s.pubdate     || '—',
+        pageCount:     '—',
+        thumbnail:     s.cover       || ''
+      };
+      hideLoading();
+      showConfirm();
+      return;
+    }
+
+    // openBDになければGoogle Books APIで試みる
+    const res2 = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+    const data2 = await res2.json();
     hideLoading();
 
-    if (!data.items || data.items.length === 0) {
+    if (!data2.items || data2.items.length === 0) {
       showScanError(`ISBN ${isbn} の書籍情報が見つかりませんでした。`);
       return;
     }
 
-    const info = data.items[0].volumeInfo;
+    const info = data2.items[0].volumeInfo;
     bookData = {
       isbn,
-      title: info.title || '（タイトル不明）',
-      authors: (info.authors || []).join(', ') || '—',
-      publisher: info.publisher || '—',
-      publishedDate: info.publishedDate || '—',
-      pageCount: info.pageCount || '—',
-      thumbnail: info.imageLinks?.thumbnail || ''
+      title:         info.title                        || '（タイトル不明）',
+      authors:       (info.authors || []).join(', ')   || '—',
+      publisher:     info.publisher                    || '—',
+      publishedDate: info.publishedDate                || '—',
+      pageCount:     info.pageCount                    || '—',
+      thumbnail:     info.imageLinks?.thumbnail        || ''
     };
     showConfirm();
   } catch (e) {
