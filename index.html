@@ -234,8 +234,12 @@ function startScanning() {
     try {
       const barcodes = await detector.detect(video);
       if (barcodes.length>0) {
-        const raw = barcodes[0].rawValue.replace(/-/g,'');
-        if (raw.length===13||raw.length===10) { stopScanning(); stopCamera(); await lookupISBN(raw); }
+        for (const bc of barcodes) {
+          const raw = bc.rawValue.replace(/-/g,'');
+          if ((raw.length===13 && (raw.startsWith('978')||raw.startsWith('979'))) || raw.length===10) {
+            stopScanning(); stopCamera(); await lookupISBN(raw); break;
+          }
+        }
       }
     } catch(_){}
   },300);
