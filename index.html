@@ -9,339 +9,129 @@
 <title>読書記録</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
   :root {
-    --bg: #fafaf8;
-    --surface: #ffffff;
-    --border: rgba(0,0,0,0.1);
-    --text-primary: #1a1a18;
-    --text-secondary: #6b6b68;
-    --text-hint: #a0a09c;
-    --accent: #0f6e56;
-    --accent-light: #e1f5ee;
-    --accent-mid: #1d9e75;
-    --danger: #993c1d;
-    --radius-md: 10px;
-    --radius-lg: 16px;
+    --bg: #fafaf8; --surface: #ffffff; --border: rgba(0,0,0,0.1);
+    --text-primary: #1a1a18; --text-secondary: #6b6b68; --text-hint: #a0a09c;
+    --accent: #0f6e56; --accent-light: #e1f5ee; --accent-mid: #1d9e75;
+    --radius-md: 10px; --radius-lg: 16px;
   }
+  body { font-family: -apple-system,'Hiragino Sans','Noto Sans JP',sans-serif; background:var(--bg); color:var(--text-primary); min-height:100vh; font-size:15px; line-height:1.6; }
+  #root { max-width:430px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; }
+  .screen { display:none; flex-direction:column; flex:1; }
+  .screen.active { display:flex; }
 
-  body {
-    font-family: -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
-    background: var(--bg);
-    color: var(--text-primary);
-    min-height: 100vh;
-    font-size: 15px;
-    line-height: 1.6;
-  }
+  .header { padding:16px 20px 12px; display:flex; align-items:center; gap:12px; border-bottom:0.5px solid var(--border); background:var(--surface); }
+  .header-back { width:32px; height:32px; border-radius:50%; border:0.5px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; color:var(--text-secondary); flex-shrink:0; }
+  .header-title { font-size:15px; font-weight:500; }
+  .header-sub { font-size:12px; color:var(--text-secondary); margin-top:1px; }
 
-  #root { max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+  #scan-screen { background:#000; }
+  .camera-wrap { position:relative; flex:1; background:#111; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  #video { width:100%; height:100%; object-fit:cover; display:block; }
+  .scan-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+  .scan-frame { width:260px; height:100px; position:relative; }
+  .scan-frame::before,.scan-frame::after,.scan-corner-br,.scan-corner-bl { content:''; position:absolute; width:24px; height:24px; border-color:rgba(255,255,255,0.9); border-style:solid; }
+  .scan-frame::before { top:0; left:0; border-width:2px 0 0 2px; }
+  .scan-frame::after  { top:0; right:0; border-width:2px 2px 0 0; }
+  .scan-corner-br { bottom:0; right:0; border-width:0 2px 2px 0; }
+  .scan-corner-bl { bottom:0; left:0; border-width:0 0 2px 2px; }
+  .scan-line { position:absolute; left:4px; right:4px; height:1.5px; background:linear-gradient(90deg,transparent,#1d9e75,transparent); animation:scan 2s ease-in-out infinite; }
+  @keyframes scan { 0%{top:10%;opacity:0} 10%{opacity:1} 90%{opacity:1} 100%{top:90%;opacity:0} }
+  .scan-status { position:absolute; bottom:0; left:0; right:0; padding:16px 20px; background:linear-gradient(transparent,rgba(0,0,0,0.7)); color:#fff; }
+  .scan-status-text { font-size:13px; color:rgba(255,255,255,0.8); margin-bottom:12px; text-align:center; }
+  .scan-start-hint { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); color:#fff; gap:12px; }
+  .scan-start-hint p { font-size:14px; color:rgba(255,255,255,0.7); }
 
-  .screen { display: none; flex-direction: column; flex: 1; }
-  .screen.active { display: flex; }
+  .btn-primary { background:var(--accent); color:#fff; border:none; border-radius:var(--radius-md); padding:12px 24px; font-size:15px; font-weight:500; font-family:inherit; cursor:pointer; width:100%; transition:opacity 0.15s; }
+  .btn-primary:active { opacity:0.8; }
+  .btn-secondary { background:var(--bg); color:var(--text-primary); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:11px 24px; font-size:15px; font-family:inherit; cursor:pointer; width:100%; transition:background 0.15s; }
+  .btn-secondary:active { background:#eee; }
 
-  /* ── ヘッダー ── */
-  .header {
-    padding: 16px 20px 12px;
-    display: flex; align-items: center; gap: 12px;
-    border-bottom: 0.5px solid var(--border);
-    background: var(--surface);
-  }
-  .header-back {
-    width: 32px; height: 32px; border-radius: 50%;
-    border: 0.5px solid var(--border);
-    background: var(--bg);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 16px; color: var(--text-secondary);
-    flex-shrink: 0;
-  }
-  .header-title { font-size: 15px; font-weight: 500; color: var(--text-primary); }
-  .header-sub { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+  .manual-panel { background:var(--surface); padding:16px 20px; border-top:0.5px solid var(--border); }
+  .manual-row { display:flex; gap:8px; }
+  input[type="text"],textarea { background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-md); padding:10px 12px; font-size:15px; font-family:inherit; color:var(--text-primary); width:100%; outline:none; transition:border-color 0.15s; }
+  input:focus,textarea:focus { border-color:var(--accent-mid); }
+  input::placeholder,textarea::placeholder { color:var(--text-hint); }
+  .manual-btn { flex-shrink:0; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-md); padding:10px 16px; font-size:14px; font-weight:500; font-family:inherit; cursor:pointer; white-space:nowrap; }
+  .manual-btn:active { opacity:0.8; }
 
-  /* ── スキャン画面 ── */
-  #scan-screen { background: #000; }
+  .confirm-body { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px; }
+  .book-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+  .book-card-header { padding:16px 16px 12px; display:flex; gap:14px; align-items:flex-start; }
+  .book-thumb { width:52px; height:72px; border-radius:4px; background:var(--accent-light); flex-shrink:0; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .book-thumb img { width:100%; height:100%; object-fit:cover; }
+  .book-thumb-placeholder { font-size:22px; }
+  .book-meta { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
 
-  .camera-wrap {
-    position: relative; flex: 1;
-    background: #111; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-  }
+  /* 書誌フィールドをinputに */
+  .book-field { background:transparent; border:none; border-bottom:0.5px solid transparent; border-radius:0; padding:2px 0; font-family:inherit; color:var(--text-primary); width:100%; outline:none; transition:border-color 0.15s; }
+  .book-field:focus { border-bottom-color:var(--accent-mid); background:transparent; }
+  .book-field.title { font-size:15px; font-weight:500; }
+  .book-field.author { font-size:13px; color:var(--text-secondary); }
+  .book-field.publisher { font-size:12px; color:var(--text-hint); }
 
-  #video {
-    width: 100%; height: 100%;
-    object-fit: cover; display: block;
-  }
+  .book-detail-row { display:flex; border-top:0.5px solid var(--border); }
+  .book-detail-cell { flex:1; padding:10px 14px; }
+  .book-detail-cell + .book-detail-cell { border-left:0.5px solid var(--border); }
+  .book-detail-label { font-size:11px; color:var(--text-hint); margin-bottom:2px; }
+  .book-detail-val { font-size:13px; color:var(--text-primary); }
 
-  .scan-overlay {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    pointer-events: none;
-  }
+  .section-label { font-size:12px; color:var(--text-secondary); margin-bottom:8px; }
+  .stars { display:flex; gap:6px; }
+  .star { font-size:28px; cursor:pointer; color:#ddd; transition:color 0.1s,transform 0.1s; line-height:1; }
+  .star.active { color:#e8a020; }
+  .star:active { transform:scale(1.2); }
+  textarea { resize:none; }
 
-  .scan-frame {
-    width: 260px; height: 100px;
-    position: relative;
-  }
+  .confirm-footer { padding:16px 20px 24px; background:var(--surface); border-top:0.5px solid var(--border); display:flex; flex-direction:column; gap:10px; }
 
-  .scan-frame::before, .scan-frame::after,
-  .scan-corner-br, .scan-corner-bl {
-    content: '';
-    position: absolute;
-    width: 24px; height: 24px;
-    border-color: rgba(255,255,255,0.9);
-    border-style: solid;
-  }
-  .scan-frame::before { top: 0; left: 0; border-width: 2px 0 0 2px; }
-  .scan-frame::after  { top: 0; right: 0; border-width: 2px 2px 0 0; }
-  .scan-corner-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
-  .scan-corner-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+  #success-screen { align-items:center; justify-content:center; text-align:center; gap:16px; padding:40px 24px; }
+  .success-icon { width:72px; height:72px; background:var(--accent-light); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:32px; margin-bottom:8px; }
+  .success-title { font-size:18px; font-weight:500; }
+  .success-sub { font-size:14px; color:var(--text-secondary); }
+  .success-isbn { font-size:12px; color:var(--text-hint); font-family:monospace; margin-top:4px; }
 
-  .scan-line {
-    position: absolute; left: 4px; right: 4px; height: 1.5px;
-    background: linear-gradient(90deg, transparent, #1d9e75, transparent);
-    animation: scan 2s ease-in-out infinite;
-  }
-  @keyframes scan {
-    0%   { top: 10%; opacity: 0; }
-    10%  { opacity: 1; }
-    90%  { opacity: 1; }
-    100% { top: 90%; opacity: 0; }
-  }
+  .loading-overlay { display:none; position:fixed; inset:0; background:rgba(250,250,248,0.9); align-items:center; justify-content:center; flex-direction:column; gap:12px; z-index:100; }
+  .loading-overlay.show { display:flex; }
+  .spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--accent-mid); border-radius:50%; animation:spin 0.7s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .loading-text { font-size:13px; color:var(--text-secondary); }
 
-  .scan-status {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 16px 20px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.7));
-    color: #fff;
-  }
-  .scan-status-text { font-size: 13px; color: rgba(255,255,255,0.8); margin-bottom: 12px; text-align: center; }
-
-  .scan-start-hint {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    gap: 12px;
-  }
-  .scan-start-hint p { font-size: 14px; color: rgba(255,255,255,0.7); }
-
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius-md);
-    padding: 12px 24px;
-    font-size: 15px;
-    font-weight: 500;
-    font-family: inherit;
-    cursor: pointer;
-    width: 100%;
-    transition: opacity 0.15s;
-  }
-  .btn-primary:active { opacity: 0.8; }
-
-  .btn-secondary {
-    background: var(--bg);
-    color: var(--text-primary);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 11px 24px;
-    font-size: 15px;
-    font-family: inherit;
-    cursor: pointer;
-    width: 100%;
-    transition: background 0.15s;
-  }
-  .btn-secondary:active { background: #eee; }
-
-  /* ── ISBN手入力 ── */
-  .manual-panel {
-    background: var(--surface);
-    padding: 16px 20px;
-    border-top: 0.5px solid var(--border);
-  }
-  .manual-row { display: flex; gap: 8px; }
-
-  input[type="text"], input[type="number"], textarea {
-    background: var(--bg);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
-    font-size: 15px;
-    font-family: inherit;
-    color: var(--text-primary);
-    width: 100%;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  input:focus, textarea:focus { border-color: var(--accent-mid); }
-  input[type="text"]::placeholder { color: var(--text-hint); }
-
-  .manual-btn {
-    flex-shrink: 0;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius-md);
-    padding: 10px 16px;
-    font-size: 14px;
-    font-weight: 500;
-    font-family: inherit;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .manual-btn:active { opacity: 0.8; }
-
-  /* ── 確認・記録画面 ── */
-  .confirm-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-
-  .book-card {
-    background: var(--surface);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-  }
-  .book-card-header {
-    padding: 16px 16px 12px;
-    display: flex; gap: 14px; align-items: flex-start;
-  }
-  .book-thumb {
-    width: 52px; height: 72px;
-    border-radius: 4px;
-    background: var(--accent-light);
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden;
-  }
-  .book-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .book-thumb-placeholder { font-size: 22px; }
-
-  .book-meta { flex: 1; min-width: 0; }
-  .book-title { font-size: 15px; font-weight: 500; line-height: 1.4; margin-bottom: 4px; }
-  .book-author { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
-  .book-publisher { font-size: 12px; color: var(--text-hint); }
-
-  .book-detail-row {
-    display: flex; border-top: 0.5px solid var(--border);
-  }
-  .book-detail-cell {
-    flex: 1; padding: 10px 14px;
-    font-size: 12px; color: var(--text-secondary);
-  }
-  .book-detail-cell + .book-detail-cell { border-left: 0.5px solid var(--border); }
-  .book-detail-label { font-size: 11px; color: var(--text-hint); margin-bottom: 2px; }
-  .book-detail-val { font-size: 13px; color: var(--text-primary); }
-
-  .isbn-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: var(--accent-light); color: var(--accent);
-    font-size: 11px; padding: 3px 8px;
-    border-radius: 20px;
-  }
-
-  /* ── 評価・メモ ── */
-  .section-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
-
-  .stars { display: flex; gap: 6px; }
-  .star {
-    font-size: 28px; cursor: pointer;
-    color: #ddd; transition: color 0.1s, transform 0.1s;
-    line-height: 1;
-  }
-  .star.active { color: #e8a020; }
-  .star:active { transform: scale(1.2); }
-
-  textarea { resize: none; }
-
-  .confirm-footer {
-    padding: 16px 20px 24px;
-    background: var(--surface);
-    border-top: 0.5px solid var(--border);
-    display: flex; flex-direction: column; gap: 10px;
-  }
-
-  /* ── 成功画面 ── */
-  #success-screen {
-    align-items: center; justify-content: center;
-    text-align: center; gap: 16px;
-    padding: 40px 24px;
-  }
-  .success-icon {
-    width: 72px; height: 72px;
-    background: var(--accent-light);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 32px;
-    margin-bottom: 8px;
-  }
-  .success-title { font-size: 18px; font-weight: 500; }
-  .success-sub { font-size: 14px; color: var(--text-secondary); }
-  .success-isbn { font-size: 12px; color: var(--text-hint); font-family: monospace; margin-top: 4px; }
-
-  /* ── ローディング ── */
-  .loading-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(250,250,248,0.9);
-    align-items: center; justify-content: center;
-    flex-direction: column; gap: 12px;
-    z-index: 100;
-  }
-  .loading-overlay.show { display: flex; }
-  .spinner {
-    width: 32px; height: 32px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent-mid);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 13px; color: var(--text-secondary); }
-
-  /* ── エラー ── */
-  .error-banner {
-    background: #fcebeb; color: #a32d2d;
-    border: 0.5px solid #f09595;
-    border-radius: var(--radius-md);
-    padding: 10px 14px; font-size: 13px;
-    display: none;
-  }
-  .error-banner.show { display: block; }
+  .error-banner { background:#fcebeb; color:#a32d2d; border:0.5px solid #f09595; border-radius:var(--radius-md); padding:10px 14px; font-size:13px; display:none; }
+  .error-banner.show { display:block; }
+  .info-banner { background:var(--accent-light); color:var(--accent); border:0.5px solid #9fe1cb; border-radius:var(--radius-md); padding:10px 14px; font-size:13px; display:none; }
+  .info-banner.show { display:block; }
 </style>
 </head>
 <body>
-
 <div id="root">
 
   <!-- スキャン画面 -->
   <div id="scan-screen" class="screen active">
     <div class="camera-wrap">
       <video id="video" autoplay playsinline muted></video>
-
       <div class="scan-overlay" id="scan-overlay" style="display:none;">
         <div class="scan-frame">
-          <div class="scan-corner-br"></div>
-          <div class="scan-corner-bl"></div>
+          <div class="scan-corner-br"></div><div class="scan-corner-bl"></div>
           <div class="scan-line"></div>
         </div>
       </div>
-
       <div class="scan-start-hint" id="scan-hint">
-        <div style="font-size: 48px;">📚</div>
+        <div style="font-size:48px;">📚</div>
         <p>バーコードをスキャンするか<br>ISBNを手入力してください</p>
-        <div style="display:flex; flex-direction:column; gap:8px; width:220px; margin-top:8px;">
-          <button class="btn-primary" onclick="startCamera()" style="width:100%;">カメラでスキャン</button>
+        <div style="display:flex;flex-direction:column;gap:8px;width:220px;margin-top:8px;">
+          <button class="btn-primary" onclick="startCamera()">カメラでスキャン</button>
         </div>
       </div>
-
       <div class="scan-status" id="scan-status" style="display:none;">
         <p class="scan-status-text" id="scan-status-text">バーコードをフレームに合わせてください</p>
-        <button class="btn-secondary" onclick="stopCamera()" style="background:rgba(255,255,255,0.15); color:#fff; border-color:rgba(255,255,255,0.3);">キャンセル</button>
+        <button class="btn-secondary" onclick="stopCamera()" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.3);">キャンセル</button>
       </div>
     </div>
-
     <div class="manual-panel">
       <div id="scan-error" class="error-banner" style="margin-bottom:10px;"></div>
       <div class="manual-row">
-        <input type="text" id="isbn-input" placeholder="ISBN（例：9784106022... ）" inputmode="numeric">
+        <input type="text" id="isbn-input" placeholder="ISBN（例：9784...）" inputmode="numeric">
         <button class="manual-btn" onclick="lookupManual()">検索</button>
       </div>
     </div>
@@ -356,20 +146,16 @@
         <div class="header-sub" id="confirm-isbn-header"></div>
       </div>
     </div>
-
     <div class="confirm-body">
-
       <div id="confirm-error" class="error-banner"></div>
-
-      <div class="book-card" id="book-card">
+      <div id="manual-note" class="info-banner">書籍情報が見つかりませんでした。書名・著者を直接入力して記録できます。</div>
+      <div class="book-card">
         <div class="book-card-header">
-          <div class="book-thumb" id="book-thumb">
-            <span class="book-thumb-placeholder">📖</span>
-          </div>
+          <div class="book-thumb" id="book-thumb"><span class="book-thumb-placeholder">📖</span></div>
           <div class="book-meta">
-            <div class="book-title" id="book-title">—</div>
-            <div class="book-author" id="book-author"></div>
-            <div class="book-publisher" id="book-publisher"></div>
+            <input class="book-field title" id="book-title" placeholder="書名" type="text">
+            <input class="book-field author" id="book-author" placeholder="著者" type="text">
+            <input class="book-field publisher" id="book-publisher" placeholder="出版社" type="text">
           </div>
         </div>
         <div class="book-detail-row">
@@ -387,25 +173,21 @@
           </div>
         </div>
       </div>
-
       <div>
         <div class="section-label">評価（任意）</div>
-        <div class="stars" id="stars">
-          <span class="star" data-v="1" onclick="setRating(1)">★</span>
-          <span class="star" data-v="2" onclick="setRating(2)">★</span>
-          <span class="star" data-v="3" onclick="setRating(3)">★</span>
-          <span class="star" data-v="4" onclick="setRating(4)">★</span>
-          <span class="star" data-v="5" onclick="setRating(5)">★</span>
+        <div class="stars">
+          <span class="star" onclick="setRating(1)">★</span>
+          <span class="star" onclick="setRating(2)">★</span>
+          <span class="star" onclick="setRating(3)">★</span>
+          <span class="star" onclick="setRating(4)">★</span>
+          <span class="star" onclick="setRating(5)">★</span>
         </div>
       </div>
-
       <div>
         <div class="section-label">メモ（任意）</div>
         <textarea id="memo" rows="3" placeholder="感想、引用など…"></textarea>
       </div>
-
     </div>
-
     <div class="confirm-footer">
       <button class="btn-primary" onclick="submitRecord()">スプレッドシートに記録する</button>
       <button class="btn-secondary" onclick="goBack()">スキャンし直す</button>
@@ -415,17 +197,16 @@
   <!-- 完了画面 -->
   <div id="success-screen" class="screen">
     <div class="success-icon">✓</div>
-    <div class="success-title" id="success-title">記録しました</div>
+    <div class="success-title">記録しました</div>
     <div class="success-sub" id="success-sub"></div>
     <div class="success-isbn" id="success-isbn"></div>
-    <div style="margin-top:24px; width:100%; max-width:280px; display:flex; flex-direction:column; gap:10px;">
+    <div style="margin-top:24px;width:100%;max-width:280px;">
       <button class="btn-primary" onclick="scanNext()">次の本を記録する</button>
     </div>
   </div>
 
 </div>
 
-<!-- ローディング -->
 <div class="loading-overlay" id="loading">
   <div class="spinner"></div>
   <div class="loading-text" id="loading-text">書籍情報を取得中…</div>
@@ -434,240 +215,178 @@
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzjF1Iruk21FGWfVFfb4icKmPlNmwJkRO6Nz6kvqmrm6kgHCsC3DmZNaPye1HaqfsFp/exec';
 
-let stream = null;
-let detector = null;
-let scanInterval = null;
-let currentISBN = '';
-let rating = 0;
-let bookData = {};
+let stream=null, detector=null, scanInterval=null;
+let currentISBN='', rating=0, bookData={};
 
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-
-function showLoading(text) {
-  document.getElementById('loading-text').textContent = text || '処理中…';
-  document.getElementById('loading').classList.add('show');
-}
-function hideLoading() {
-  document.getElementById('loading').classList.remove('show');
-}
-
-function showScanError(msg) {
-  const el = document.getElementById('scan-error');
-  el.textContent = msg; el.classList.add('show');
-}
-function hideScanError() {
-  document.getElementById('scan-error').classList.remove('show');
-}
+function showLoading(t) { document.getElementById('loading-text').textContent=t||'処理中…'; document.getElementById('loading').classList.add('show'); }
+function hideLoading() { document.getElementById('loading').classList.remove('show'); }
+function showScanError(m) { const el=document.getElementById('scan-error'); el.textContent=m; el.classList.add('show'); }
+function hideScanError() { document.getElementById('scan-error').classList.remove('show'); }
 
 async function startCamera() {
   hideScanError();
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showScanError('このブラウザはカメラに対応していません。ISBNを手入力してください。');
-    return;
-  }
+  if (!navigator.mediaDevices?.getUserMedia) { showScanError('カメラ非対応です。ISBNを手入力してください。'); return; }
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-    });
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
     const video = document.getElementById('video');
-    video.srcObject = stream;
-    await video.play();
-
-    document.getElementById('scan-hint').style.display = 'none';
-    document.getElementById('scan-overlay').style.display = 'flex';
-    document.getElementById('scan-status').style.display = 'block';
-
+    video.srcObject = stream; await video.play();
+    document.getElementById('scan-hint').style.display='none';
+    document.getElementById('scan-overlay').style.display='flex';
+    document.getElementById('scan-status').style.display='block';
     if ('BarcodeDetector' in window) {
-      detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8'] });
+      detector = new BarcodeDetector({formats:['ean_13','ean_8']});
       startScanning();
     } else {
-      document.getElementById('scan-status-text').textContent = 'BarcodeDetector未対応。ISBNを手入力してください。';
+      document.getElementById('scan-status-text').textContent='BarcodeDetector未対応。ISBNを手入力してください。';
     }
-  } catch (e) {
-    showScanError('カメラへのアクセスが拒否されました。ブラウザの設定を確認するか、ISBNを手入力してください。');
-  }
+  } catch(e) { showScanError('カメラアクセスが拒否されました。ISBNを手入力してください。'); }
 }
 
 function startScanning() {
   const video = document.getElementById('video');
-  scanInterval = setInterval(async () => {
-    if (!detector || video.readyState < 2) return;
+  scanInterval = setInterval(async()=>{
+    if (!detector||video.readyState<2) return;
     try {
       const barcodes = await detector.detect(video);
-      if (barcodes.length > 0) {
-        const raw = barcodes[0].rawValue.replace(/-/g, '');
-        if (raw.length === 13 || raw.length === 10) {
-          stopScanning();
-          stopCamera();
-          await lookupISBN(raw);
-        }
+      if (barcodes.length>0) {
+        const raw = barcodes[0].rawValue.replace(/-/g,'');
+        if (raw.length===13||raw.length===10) { stopScanning(); stopCamera(); await lookupISBN(raw); }
       }
-    } catch (_) {}
-  }, 300);
+    } catch(_){}
+  },300);
 }
-
-function stopScanning() {
-  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
-}
-
+function stopScanning() { if(scanInterval){clearInterval(scanInterval);scanInterval=null;} }
 function stopCamera() {
   stopScanning();
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-  const video = document.getElementById('video');
-  video.srcObject = null;
-  document.getElementById('scan-hint').style.display = 'flex';
-  document.getElementById('scan-overlay').style.display = 'none';
-  document.getElementById('scan-status').style.display = 'none';
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  const video=document.getElementById('video'); video.srcObject=null;
+  document.getElementById('scan-hint').style.display='flex';
+  document.getElementById('scan-overlay').style.display='none';
+  document.getElementById('scan-status').style.display='none';
 }
 
 async function lookupManual() {
   hideScanError();
-  const val = document.getElementById('isbn-input').value.trim().replace(/-/g, '');
+  const val = document.getElementById('isbn-input').value.trim().replace(/-/g,'');
   if (!val) { showScanError('ISBNを入力してください。'); return; }
-  if (val.length !== 10 && val.length !== 13) {
-    showScanError('ISBNは10桁または13桁で入力してください。');
-    return;
-  }
+  if (val.length!==10&&val.length!==13) { showScanError('ISBNは10桁または13桁で入力してください。'); return; }
   await lookupISBN(val);
 }
 
 async function lookupISBN(isbn) {
   showLoading('書籍情報を取得中…');
   currentISBN = isbn;
+
+  // ① openBD
   try {
-    // openBD（日本語書籍に強いデータベース）で検索
     const res = await fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`);
     const data = await res.json();
-
     if (data[0]) {
       const s = data[0].summary;
-      bookData = {
-        isbn,
-        title:         s.title       || '（タイトル不明）',
-        authors:       s.author      || '—',
-        publisher:     s.publisher   || '—',
-        publishedDate: s.pubdate     || '—',
-        pageCount:     '—',
-        thumbnail:     s.cover       || ''
-      };
       hideLoading();
-      showConfirm();
+      showConfirm({ title:s.title||'', authors:s.author||'', publisher:s.publisher||'', publishedDate:s.pubdate||'', pageCount:'', thumbnail:s.cover||'' }, false);
       return;
     }
+  } catch(_){}
 
-    // openBDになければGoogle Books APIで試みる
-    const res2 = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
-    const data2 = await res2.json();
-    hideLoading();
-
-    if (!data2.items || data2.items.length === 0) {
-      showScanError(`ISBN ${isbn} の書籍情報が見つかりませんでした。`);
+  // ② Google Books
+  try {
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+    const data = await res.json();
+    if (data.items?.length>0) {
+      const info = data.items[0].volumeInfo;
+      hideLoading();
+      showConfirm({ title:info.title||'', authors:(info.authors||[]).join(', '), publisher:info.publisher||'', publishedDate:info.publishedDate||'', pageCount:info.pageCount||'', thumbnail:info.imageLinks?.thumbnail||'' }, false);
       return;
     }
+  } catch(_){}
 
-    const info = data2.items[0].volumeInfo;
-    bookData = {
-      isbn,
-      title:         info.title                        || '（タイトル不明）',
-      authors:       (info.authors || []).join(', ')   || '—',
-      publisher:     info.publisher                    || '—',
-      publishedDate: info.publishedDate                || '—',
-      pageCount:     info.pageCount                    || '—',
-      thumbnail:     info.imageLinks?.thumbnail        || ''
-    };
-    showConfirm();
-  } catch (e) {
-    hideLoading();
-    showScanError('書籍情報の取得に失敗しました。通信状態を確認してください。');
-  }
+  // ③ 国立国会図書館
+  try {
+    const res = await fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}`);
+    const text = await res.text();
+    const xml = new DOMParser().parseFromString(text,'text/xml');
+    const item = xml.querySelector('item');
+    if (item) {
+      const DC = 'http://purl.org/dc/elements/1.1/';
+      const get = (ns,tag) => item.getElementsByTagNameNS(ns,tag)[0]?.textContent||'';
+      const title = item.querySelector('title')?.textContent||'';
+      hideLoading();
+      showConfirm({ title, authors:get(DC,'creator'), publisher:get(DC,'publisher'), publishedDate:get(DC,'date'), pageCount:'', thumbnail:'' }, false);
+      return;
+    }
+  } catch(_){}
+
+  // ④ 全て失敗 → 手動入力モード
+  hideLoading();
+  showConfirm({ title:'', authors:'', publisher:'', publishedDate:'', pageCount:'', thumbnail:'' }, true);
 }
 
-function showConfirm() {
+function showConfirm(info, isManual) {
   rating = 0;
   document.getElementById('memo').value = '';
-  document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.star').forEach(s=>s.classList.remove('active'));
 
   document.getElementById('confirm-isbn-header').textContent = `ISBN: ${currentISBN}`;
-  document.getElementById('book-title').textContent = bookData.title;
-  document.getElementById('book-author').textContent = bookData.authors;
-  document.getElementById('book-publisher').textContent = bookData.publisher;
-  document.getElementById('book-date').textContent = bookData.publishedDate;
-  document.getElementById('book-pages').textContent = bookData.pageCount ? `${bookData.pageCount}p` : '—';
+  document.getElementById('book-title').value = info.title;
+  document.getElementById('book-author').value = info.authors;
+  document.getElementById('book-publisher').value = info.publisher;
+  document.getElementById('book-date').textContent = info.publishedDate || '—';
+  document.getElementById('book-pages').textContent = info.pageCount ? `${info.pageCount}p` : '—';
 
   const today = new Date();
   document.getElementById('record-date-label').textContent =
     `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
 
   const thumb = document.getElementById('book-thumb');
-  if (bookData.thumbnail) {
-    const httpsUrl = bookData.thumbnail.replace('http://', 'https://');
-    thumb.innerHTML = `<img src="${httpsUrl}" alt="表紙">`;
-  } else {
-    thumb.innerHTML = '<span class="book-thumb-placeholder">📖</span>';
-  }
+  thumb.innerHTML = info.thumbnail
+    ? `<img src="${info.thumbnail.replace('http://','https://')}" alt="表紙">`
+    : '<span class="book-thumb-placeholder">📖</span>';
 
   document.getElementById('confirm-error').classList.remove('show');
+  document.getElementById('manual-note').classList.toggle('show', isManual);
   document.getElementById('isbn-input').value = '';
   showScreen('confirm-screen');
 }
 
-function goBack() {
-  stopCamera();
-  showScreen('scan-screen');
-}
+function goBack() { stopCamera(); showScreen('scan-screen'); }
 
 function setRating(val) {
   rating = val;
-  document.querySelectorAll('.star').forEach(s => {
-    s.classList.toggle('active', parseInt(s.dataset.v) <= val);
-  });
+  document.querySelectorAll('.star').forEach((s,i)=>s.classList.toggle('active',i<val));
 }
 
 async function submitRecord() {
-  const memo = document.getElementById('memo').value.trim();
+  const title = document.getElementById('book-title').value.trim();
+  if (!title) { const e=document.getElementById('confirm-error'); e.textContent='書名を入力してください。'; e.classList.add('show'); return; }
+
   const payload = {
-    isbn: bookData.isbn,
-    rating: rating > 0 ? String(rating) : '',
-    memo
+    isbn: currentISBN,
+    rating: rating>0?String(rating):'',
+    memo: document.getElementById('memo').value.trim()
   };
-
   showLoading('スプレッドシートに記録中…');
-
   try {
-    await fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    await fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     hideLoading();
-    showSuccess();
-  } catch (e) {
+    document.getElementById('success-sub').textContent = title;
+    document.getElementById('success-isbn').textContent = `ISBN: ${currentISBN}`;
+    showScreen('success-screen');
+  } catch(e) {
     hideLoading();
-    const err = document.getElementById('confirm-error');
-    err.textContent = '送信に失敗しました。通信状態を確認してください。';
+    const err=document.getElementById('confirm-error');
+    err.textContent='送信に失敗しました。通信状態を確認してください。';
     err.classList.add('show');
   }
 }
 
-function showSuccess() {
-  document.getElementById('success-title').textContent = '記録しました';
-  document.getElementById('success-sub').textContent = bookData.title;
-  document.getElementById('success-isbn').textContent = `ISBN: ${currentISBN}`;
-  showScreen('success-screen');
-}
+function scanNext() { bookData={}; currentISBN=''; rating=0; showScreen('scan-screen'); }
 
-function scanNext() {
-  bookData = {}; currentISBN = ''; rating = 0;
-  showScreen('scan-screen');
-}
-
-document.getElementById('isbn-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') lookupManual();
-});
+document.getElementById('isbn-input').addEventListener('keydown',e=>{if(e.key==='Enter')lookupManual();});
 </script>
 </body>
 </html>
