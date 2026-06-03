@@ -119,7 +119,7 @@
         </div>
       </div>
       <div class="scan-status" id="scan-status" style="display:none;">
-        <p class="scan-status-text" id="scan-status-text">バーコードをフレームに合わせてください</p>
+        <p class="scan-status-text" id="scan-status-text">978または979で始まるバーコードを合わせてください</p>
         <button class="btn-secondary" onclick="stopCamera()" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.3);">キャンセル</button>
       </div>
     </div>
@@ -197,7 +197,7 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzjF1Iruk21FGWfVFfb4icKmPlNmwJkRO6Nz6kvqmrm6kgHCsC3DmZNaPye1HaqfsFp/exec';
 
 let stream=null, detector=null, scanInterval=null;
-let currentISBN='', bookData={};
+let currentISBN='';
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -207,6 +207,10 @@ function showLoading(t) { document.getElementById('loading-text').textContent=t|
 function hideLoading() { document.getElementById('loading').classList.remove('show'); }
 function showScanError(m) { const el=document.getElementById('scan-error'); el.textContent=m; el.classList.add('show'); }
 function hideScanError() { document.getElementById('scan-error').classList.remove('show'); }
+
+function isISBN(raw) {
+  return (raw.length===13 && (raw.startsWith('978')||raw.startsWith('979'))) || raw.length===10;
+}
 
 async function startCamera() {
   hideScanError();
@@ -233,17 +237,16 @@ function startScanning() {
     if (!detector||video.readyState<2) return;
     try {
       const barcodes = await detector.detect(video);
-      if (barcodes.length>0) {
-        for (const bc of barcodes) {
-          const raw = bc.rawValue.replace(/-/g,'');
-          if ((raw.length===13 && (raw.startsWith('978')||raw.startsWith('979'))) || raw.length===10) {
-            stopScanning(); stopCamera(); await lookupISBN(raw); break;
-          }
+      for (const bc of barcodes) {
+        const raw = bc.rawValue.replace(/-/g,'');
+        if (isISBN(raw)) {
+          stopScanning(); stopCamera(); await lookupISBN(raw); break;
         }
       }
     } catch(_){}
   },300);
 }
+
 function stopScanning() { if(scanInterval){clearInterval(scanInterval);scanInterval=null;} }
 function stopCamera() {
   stopScanning();
@@ -258,7 +261,7 @@ async function lookupManual() {
   hideScanError();
   const val = document.getElementById('isbn-input').value.trim().replace(/-/g,'');
   if (!val) { showScanError('ISBNを入力してください。'); return; }
-  if (val.length!==10&&val.length!==13) { showScanError('ISBNは10桁または13桁で入力してください。'); return; }
+  if (!isISBN(val)) { showScanError('ISBNは978/979で始まる13桁、または10桁で入力してください。'); return; }
   await lookupISBN(val);
 }
 
@@ -360,7 +363,7 @@ async function submitRecord() {
   }
 }
 
-function scanNext() { currentISBN=''; bookData={}; showScreen('scan-screen'); }
+function scanNext() { currentISBN=''; showScreen('scan-screen'); }
 
 document.getElementById('isbn-input').addEventListener('keydown',e=>{if(e.key==='Enter')lookupManual();});
 </script>
