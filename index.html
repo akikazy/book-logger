@@ -319,8 +319,16 @@ function showConfirm(info, isManual) {
   document.getElementById('book-title').value = info.title;
   document.getElementById('book-author').value = info.authors;
   document.getElementById('book-publisher').value = info.publisher;
-  document.getElementById('book-date').textContent = info.publishedDate || '—';
-
+  const pd = info.publishedDate || '';
+  let fmtDate = '—';
+  if (pd) {
+    const parts = pd.replace(/-/g,'/').split('/');
+    const y = parts[0] || '';
+    const m = (parts[1] || '').padStart(2,'0');
+    const d = (parts[2] || '').padStart(2,'0');
+    fmtDate = m ? (d && d!='00' ? `${y}/${m}/${d}` : `${y}/${m}`) : y;
+  }
+  document.getElementById('book-date').textContent = fmtDate;
   const today = new Date();
   document.getElementById('record-date-label').textContent =
     `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
