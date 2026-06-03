@@ -63,9 +63,8 @@
   .book-thumb-placeholder { font-size:22px; }
   .book-meta { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
 
-  /* 書誌フィールドをinputに */
   .book-field { background:transparent; border:none; border-bottom:0.5px solid transparent; border-radius:0; padding:2px 0; font-family:inherit; color:var(--text-primary); width:100%; outline:none; transition:border-color 0.15s; }
-  .book-field:focus { border-bottom-color:var(--accent-mid); background:transparent; }
+  .book-field:focus { border-bottom-color:var(--accent-mid); }
   .book-field.title { font-size:15px; font-weight:500; }
   .book-field.author { font-size:13px; color:var(--text-secondary); }
   .book-field.publisher { font-size:12px; color:var(--text-hint); }
@@ -77,10 +76,6 @@
   .book-detail-val { font-size:13px; color:var(--text-primary); }
 
   .section-label { font-size:12px; color:var(--text-secondary); margin-bottom:8px; }
-  .stars { display:flex; gap:6px; }
-  .star { font-size:28px; cursor:pointer; color:#ddd; transition:color 0.1s,transform 0.1s; line-height:1; }
-  .star.active { color:#e8a020; }
-  .star:active { transform:scale(1.2); }
   textarea { resize:none; }
 
   .confirm-footer { padding:16px 20px 24px; background:var(--surface); border-top:0.5px solid var(--border); display:flex; flex-direction:column; gap:10px; }
@@ -164,23 +159,9 @@
             <div class="book-detail-val" id="book-date">—</div>
           </div>
           <div class="book-detail-cell">
-            <div class="book-detail-label">ページ数</div>
-            <div class="book-detail-val" id="book-pages">—</div>
-          </div>
-          <div class="book-detail-cell">
             <div class="book-detail-label">記録日</div>
             <div class="book-detail-val" id="record-date-label">—</div>
           </div>
-        </div>
-      </div>
-      <div>
-        <div class="section-label">評価（任意）</div>
-        <div class="stars">
-          <span class="star" onclick="setRating(1)">★</span>
-          <span class="star" onclick="setRating(2)">★</span>
-          <span class="star" onclick="setRating(3)">★</span>
-          <span class="star" onclick="setRating(4)">★</span>
-          <span class="star" onclick="setRating(5)">★</span>
         </div>
       </div>
       <div>
@@ -216,7 +197,7 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzjF1Iruk21FGWfVFfb4icKmPlNmwJkRO6Nz6kvqmrm6kgHCsC3DmZNaPye1HaqfsFp/exec';
 
 let stream=null, detector=null, scanInterval=null;
-let currentISBN='', rating=0, bookData={};
+let currentISBN='', bookData={};
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -288,7 +269,7 @@ async function lookupISBN(isbn) {
     if (data[0]) {
       const s = data[0].summary;
       hideLoading();
-      showConfirm({ title:s.title||'', authors:s.author||'', publisher:s.publisher||'', publishedDate:s.pubdate||'', pageCount:'', thumbnail:s.cover||'' }, false);
+      showConfirm({title:s.title||'',authors:s.author||'',publisher:s.publisher||'',publishedDate:s.pubdate||'',thumbnail:s.cover||''}, false);
       return;
     }
   } catch(_){}
@@ -300,7 +281,7 @@ async function lookupISBN(isbn) {
     if (data.items?.length>0) {
       const info = data.items[0].volumeInfo;
       hideLoading();
-      showConfirm({ title:info.title||'', authors:(info.authors||[]).join(', '), publisher:info.publisher||'', publishedDate:info.publishedDate||'', pageCount:info.pageCount||'', thumbnail:info.imageLinks?.thumbnail||'' }, false);
+      showConfirm({title:info.title||'',authors:(info.authors||[]).join(', '),publisher:info.publisher||'',publishedDate:info.publishedDate||'',thumbnail:info.imageLinks?.thumbnail||''}, false);
       return;
     }
   } catch(_){}
@@ -314,29 +295,24 @@ async function lookupISBN(isbn) {
     if (item) {
       const DC = 'http://purl.org/dc/elements/1.1/';
       const get = (ns,tag) => item.getElementsByTagNameNS(ns,tag)[0]?.textContent||'';
-      const title = item.querySelector('title')?.textContent||'';
       hideLoading();
-      showConfirm({ title, authors:get(DC,'creator'), publisher:get(DC,'publisher'), publishedDate:get(DC,'date'), pageCount:'', thumbnail:'' }, false);
+      showConfirm({title:item.querySelector('title')?.textContent||'',authors:get(DC,'creator'),publisher:get(DC,'publisher'),publishedDate:get(DC,'date'),thumbnail:''}, false);
       return;
     }
   } catch(_){}
 
-  // ④ 全て失敗 → 手動入力モード
+  // ④ 手動入力モード
   hideLoading();
-  showConfirm({ title:'', authors:'', publisher:'', publishedDate:'', pageCount:'', thumbnail:'' }, true);
+  showConfirm({title:'',authors:'',publisher:'',publishedDate:'',thumbnail:''}, true);
 }
 
 function showConfirm(info, isManual) {
-  rating = 0;
   document.getElementById('memo').value = '';
-  document.querySelectorAll('.star').forEach(s=>s.classList.remove('active'));
-
   document.getElementById('confirm-isbn-header').textContent = `ISBN: ${currentISBN}`;
   document.getElementById('book-title').value = info.title;
   document.getElementById('book-author').value = info.authors;
   document.getElementById('book-publisher').value = info.publisher;
   document.getElementById('book-date').textContent = info.publishedDate || '—';
-  document.getElementById('book-pages').textContent = info.pageCount ? `${info.pageCount}p` : '—';
 
   const today = new Date();
   document.getElementById('record-date-label').textContent =
@@ -355,18 +331,14 @@ function showConfirm(info, isManual) {
 
 function goBack() { stopCamera(); showScreen('scan-screen'); }
 
-function setRating(val) {
-  rating = val;
-  document.querySelectorAll('.star').forEach((s,i)=>s.classList.toggle('active',i<val));
-}
-
 async function submitRecord() {
   const title = document.getElementById('book-title').value.trim();
-  if (!title) { const e=document.getElementById('confirm-error'); e.textContent='書名を入力してください。'; e.classList.add('show'); return; }
-
+  if (!title) {
+    const e=document.getElementById('confirm-error');
+    e.textContent='書名を入力してください。'; e.classList.add('show'); return;
+  }
   const payload = {
     isbn: currentISBN,
-    rating: rating>0?String(rating):'',
     memo: document.getElementById('memo').value.trim()
   };
   showLoading('スプレッドシートに記録中…');
@@ -384,7 +356,7 @@ async function submitRecord() {
   }
 }
 
-function scanNext() { bookData={}; currentISBN=''; rating=0; showScreen('scan-screen'); }
+function scanNext() { currentISBN=''; bookData={}; showScreen('scan-screen'); }
 
 document.getElementById('isbn-input').addEventListener('keydown',e=>{if(e.key==='Enter')lookupManual();});
 </script>
